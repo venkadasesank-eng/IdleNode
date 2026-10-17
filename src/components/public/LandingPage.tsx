@@ -113,7 +113,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             onClick={onExploreDemo}
           >
             <Sparkles size={16} color="#38BDF8" />
-            <span>Explore Demo Roles</span>
+            <span>Explore Demo Accounts</span>
           </button>
 
           {onSignIn && (
@@ -574,7 +574,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             style={{ minHeight: '44px', padding: '0 24px', fontSize: '0.9rem' }}
             onClick={onExploreDemo}
           >
-            <span>Explore Demo Roles</span>
+            <span>Explore Demo Accounts</span>
           </button>
         </div>
       </section>
@@ -613,7 +613,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             style={{ minHeight: '46px', padding: '0 24px', fontSize: '0.95rem', background: 'rgba(255, 255, 255, 0.05)' }}
             onClick={onExploreDemo}
           >
-            <span>Explore Demo Roles</span>
+            <span>Explore Demo Accounts</span>
           </button>
         </div>
       </section>
@@ -640,7 +640,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
 
         <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ cursor: 'pointer', color: '#E4E4E7' }} onClick={onExploreDemo}>Demo Roles</span>
+          <span style={{ cursor: 'pointer', color: '#E4E4E7' }} onClick={onExploreDemo}>Demo Accounts</span>
           <span style={{ cursor: 'pointer', color: '#E4E4E7' }} onClick={onGetStarted}>Student Register</span>
           {onSignIn && <span style={{ cursor: 'pointer', color: '#E4E4E7' }} onClick={onSignIn}>Sign In</span>}
           <span>Security Architecture</span>

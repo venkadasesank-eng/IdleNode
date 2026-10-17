@@ -11,6 +11,52 @@ export interface UserSession {
   email: string
 }
 
+export interface DemoAccountInfo {
+  role: 'student' | 'lab_assistant' | 'hod' | 'institution_admin' | 'technical_admin'
+  label: string
+  name: string
+  email: string
+  description: string
+}
+
+export const STATIC_DEMO_ACCOUNTS: DemoAccountInfo[] = [
+  {
+    role: 'student',
+    label: 'Student',
+    name: 'Aarav Sharma',
+    email: 'student@campus.edu',
+    description: 'Explore compute requests, remote desktop sessions, credits, notifications, file management, and student dashboard features.',
+  },
+  {
+    role: 'lab_assistant',
+    label: 'Lab Assistant',
+    name: 'Pooja Patel',
+    email: 'labtech@campus.edu',
+    description: 'Explore lab computers, monitoring, maintenance controls, and permitted session management.',
+  },
+  {
+    role: 'hod',
+    label: 'Department HOD',
+    name: 'Dr. Rajesh Iyer',
+    email: 'hod.cs@campus.edu',
+    description: 'Explore department overview, student approval workflows, and relevant reports.',
+  },
+  {
+    role: 'institution_admin',
+    label: 'Institution Admin',
+    name: 'Dean K. Varma',
+    email: 'admin@campus.edu',
+    description: 'Explore institution-level monitoring, computer registration, credit policies, and audit logs.',
+  },
+  {
+    role: 'technical_admin',
+    label: 'Technical Admin',
+    name: 'SysAdmin Vikram',
+    email: 'techadmin@campus.edu',
+    description: 'Explore technical grid administration, node health diagnostics, and developer API references.',
+  },
+]
+
 export const TOKEN_KEY = 'idlenode_token'
 export const USER_KEY = 'idlenode_user'
 
@@ -70,19 +116,29 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 export const api = {
   // Auth
   login: async (email: string, password: string): Promise<UserSession> => {
-    const data = await request<{ access_token: string; role: any; user_id: string; full_name: string; email: string }>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    })
-    const session: UserSession = {
-      token: data.access_token,
-      role: data.role,
-      userId: data.user_id,
-      fullName: data.full_name,
-      email: data.email,
+    try {
+      const data = await request<{ access_token: string; role: any; user_id: string; full_name: string; email: string }>('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      })
+      const session: UserSession = {
+        token: data.access_token,
+        role: data.role,
+        userId: data.user_id,
+        fullName: data.full_name,
+        email: data.email,
+      }
+      setStoredSession(session)
+      return session
+    } catch (err: any) {
+      // If logging into a seeded demo account while backend is offline or static preview
+      const lower = email.toLowerCase().trim()
+      const demoMatch = STATIC_DEMO_ACCOUNTS.find((a) => a.email.toLowerCase() === lower)
+      if (demoMatch && password === 'password123' && (err?.message?.includes('failed') || err?.message?.includes('fetch') || err?.message?.includes('404'))) {
+        return api.demoLogin(demoMatch.role)
+      }
+      throw err
     }
-    setStoredSession(session)
-    return session
   },
 
   register: async (form: {
@@ -121,8 +177,55 @@ export const api = {
     setStoredSession(null)
   },
 
-  getDemoAccounts: async () => {
-    return request<Array<{ role: string; label: string; email: string; password: string; name: string }>>('/auth/demo-accounts')
+  getDemoAccounts: async (): Promise<DemoAccountInfo[]> => {
+    try {
+      const data = await request<DemoAccountInfo[]>('/auth/demo-accounts')
+      if (Array.isArray(data) && data.length > 0) {
+        return data
+      }
+      return STATIC_DEMO_ACCOUNTS
+    } catch {
+      return STATIC_DEMO_ACCOUNTS
+    }
+  },
+
+  demoLogin: async (role: string): Promise<UserSession> => {
+    try {
+      const data = await request<{
+        access_token: string
+        role: any
+        user_id: string
+        full_name: string
+        email: string
+      }>('/auth/demo-login', {
+        method: 'POST',
+        body: JSON.stringify({ role }),
+      })
+      const session: UserSession = {
+        token: data.access_token,
+        role: data.role,
+        userId: data.user_id,
+        fullName: data.full_name,
+        email: data.email,
+      }
+      setStoredSession(session)
+      return session
+    } catch (err: any) {
+      if (err?.message && err.message.toLowerCase().includes('disabled')) {
+        throw err
+      }
+      // Resilient fallback for deployed static Vercel host or offline server
+      const match = STATIC_DEMO_ACCOUNTS.find((a) => a.role === role) || STATIC_DEMO_ACCOUNTS[0]
+      const session: UserSession = {
+        token: `demo-token-${match.role}-${Date.now()}`,
+        role: match.role,
+        userId: `usr_demo_${match.role}`,
+        fullName: `${match.name} (Demo)`,
+        email: match.email,
+      }
+      setStoredSession(session)
+      return session
+    }
   },
 
   // Student Dashboard

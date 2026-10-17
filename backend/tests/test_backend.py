@@ -188,3 +188,49 @@ def test_lab_assistant_monitoring():
     labs_resp = client.get("/api/lab-assistant/labs", headers=headers)
     assert labs_resp.status_code == 200
     assert len(labs_resp.json()) > 0
+
+def test_demo_accounts_discovery():
+    resp = client.get("/api/auth/demo-accounts")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 5
+    roles = [d["role"] for d in data]
+    assert "student" in roles
+    assert "lab_assistant" in roles
+    assert "hod" in roles
+    assert "institution_admin" in roles
+    assert "technical_admin" in roles
+    # Verify no passwords or hashes are returned
+    for item in data:
+        assert "password" not in item
+        assert "hashed_password" not in item
+        assert "description" in item
+        assert len(item["description"]) > 10
+
+def test_demo_login_all_5_roles():
+    roles = ["student", "lab_assistant", "hod", "institution_admin", "technical_admin"]
+    for r in roles:
+        resp = client.post("/api/auth/demo-login", json={"role": r})
+        assert resp.status_code == 200, f"Failed demo login for role {r}: {resp.text}"
+        data = resp.json()
+        assert "access_token" in data
+        assert data["role"] == r
+        assert data["user_id"] is not None
+        assert data["email"] is not None
+
+def test_demo_login_invalid_role():
+    resp = client.post("/api/auth/demo-login", json={"role": "hacker_superuser"})
+    assert resp.status_code == 400
+    assert "invalid demo role" in resp.json()["detail"].lower()
+
+def test_demo_mode_disabled():
+    from backend.app.core.config import settings
+    orig_mode = settings.DEMO_MODE
+    try:
+        settings.DEMO_MODE = False
+        resp1 = client.get("/api/auth/demo-accounts")
+        assert resp1.status_code == 403
+        resp2 = client.post("/api/auth/demo-login", json={"role": "student"})
+        assert resp2.status_code == 403
+    finally:
+        settings.DEMO_MODE = orig_mode

@@ -3,6 +3,7 @@ import { renderToString } from 'react-dom/server'
 import App from './App'
 import { ApiDocsView } from './components/public/ApiDocsView'
 import { GlobalSearchModal } from './components/common/GlobalSearchModal'
+import { AuthModal } from './components/public/AuthModal'
 import { api, getStoredSession, setStoredSession, UserSession } from './services/api'
 
 // In-memory localStorage polyfill for Node.js test environment
@@ -170,5 +171,54 @@ describe('IdleNode Frontend API & Session Client', () => {
       />
     )
     expect(adminHtml).toContain('API Documentation &amp; Developer Reference')
+  })
+
+  it('discovers all 5 demo roles via api.getDemoAccounts() without exposing passwords', async () => {
+    const accounts = await api.getDemoAccounts()
+    expect(accounts).toHaveLength(5)
+    const roles = accounts.map((a) => a.role)
+    expect(roles).toEqual(['student', 'lab_assistant', 'hod', 'institution_admin', 'technical_admin'])
+    accounts.forEach((acc) => {
+      expect((acc as any).password).toBeUndefined()
+      expect(acc.description.length).toBeGreaterThan(15)
+    })
+  })
+
+  it('authenticates visitor into any demo role via api.demoLogin()', async () => {
+    const roles: Array<'student' | 'lab_assistant' | 'hod' | 'institution_admin' | 'technical_admin'> = [
+      'student',
+      'lab_assistant',
+      'hod',
+      'institution_admin',
+      'technical_admin'
+    ]
+
+    for (const r of roles) {
+      const session = await api.demoLogin(r)
+      expect(session).toBeDefined()
+      expect(session.role).toBe(r)
+      expect(session.token).toBeTruthy()
+      expect(getStoredSession()?.role).toBe(r)
+    }
+    setStoredSession(null)
+  })
+
+  it('renders AuthModal with all 5 demo role cards and disclaimers', () => {
+    const html = renderToString(
+      <AuthModal
+        isOpen={true}
+        initialTab="demo"
+        onClose={() => {}}
+        onSuccess={() => {}}
+      />
+    )
+    expect(html).toContain('Explore Demo Accounts')
+    expect(html).toContain('Student')
+    expect(html).toContain('Lab Assistant')
+    expect(html).toContain('Department Head (HOD)')
+    expect(html).toContain('Institution Administrator')
+    expect(html).toContain('Technical Administrator')
+    expect(html).toContain('Enter Demo')
+    expect(html).toContain('Sample Data Notice')
   })
 })

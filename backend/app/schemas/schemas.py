@@ -23,6 +23,16 @@ class UserLoginRequest(BaseModel):
     email: EmailStr
     password: str
 
+class DemoLoginRequest(BaseModel):
+    role: str
+
+class DemoAccountInfo(BaseModel):
+    role: str
+    label: str
+    name: str
+    email: str
+    description: str
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str

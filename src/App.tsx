@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import {
   LayoutDashboard, Zap, Monitor, History, Folder, Coins,
   LogOut, Shield, ChevronDown, Check, Activity, Building2, User,
-  Bell, AlertCircle, Loader2, BookOpen, Search
+  Bell, AlertCircle, Loader2, BookOpen, Search, Sparkles
 } from 'lucide-react'
 
 import { BackgroundVideo } from './components/layout/BackgroundVideo'
@@ -188,11 +188,19 @@ export default function App() {
     setIsViewingApiDocs(false)
   }
 
-  const handleSwitchDemoRole = async (demoEmail: string) => {
+  const handleSwitchDemoRole = async (demoRoleOrEmail: string) => {
     setIsSwitchingRole(true)
     setRoleSwitchError(null)
     try {
-      const newSession = await api.login(demoEmail, 'password123')
+      const emailToRoleMap: Record<string, string> = {
+        'student@campus.edu': 'student',
+        'labtech@campus.edu': 'lab_assistant',
+        'hod.cs@campus.edu': 'hod',
+        'admin@campus.edu': 'institution_admin',
+        'techadmin@campus.edu': 'technical_admin',
+      }
+      const roleKey = emailToRoleMap[demoRoleOrEmail] || demoRoleOrEmail
+      const newSession = await api.demoLogin(roleKey)
       setSession(newSession)
       setCurrentPage('Overview')
       setIsViewingApiDocs(false)
@@ -333,10 +341,12 @@ export default function App() {
                   </button>
                 )}
                 <button
-                  className="glass-btn"
+                  className="glass-btn highlight"
+                  style={{ gap: '6px' }}
                   onClick={() => { setAuthModalTab('demo'); setAuthModalOpen(true) }}
                 >
-                  Explore Demo Roles
+                  <Sparkles size={13} color="#38BDF8" />
+                  <span>Explore Demo Accounts</span>
                 </button>
                 <button
                   className="glass-btn primary"

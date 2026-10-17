@@ -226,8 +226,8 @@ const ALL_SEARCH_ITEMS: SearchItem[] = [
   },
   {
     id: 'public-demo',
-    label: 'Explore Multi-Role Demo Environment',
-    description: 'Instantly evaluate Student, Lab Assistant, HOD, and Admin dashboards',
+    label: 'Explore Demo Accounts & Environments',
+    description: 'Instantly evaluate Student, Lab Assistant, HOD, Institution Admin, and Tech Admin dashboards',
     category: 'Public',
     actionKey: 'open-demo',
     icon: Sparkles,
