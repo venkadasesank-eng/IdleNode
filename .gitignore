@@ -1,8 +1,14 @@
-﻿node_modules/
+node_modules/
 dist/
 .env
 .env.*
 !.env.example
 *.log
+*.db
+storage/
+sandbox/
+test_sandbox_dir/
+__pycache__/
+.pytest_cache/
 .DS_Store
 .vscode/

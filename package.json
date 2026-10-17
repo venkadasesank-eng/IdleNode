@@ -1,4 +1,30 @@
-{"name":"idlenode","private":true,"version":"0.2.7","type":"module",
-"scripts":{"dev":"vite","build":"tsc --noEmit && vite build","preview":"vite preview","test":"vitest run","typecheck":"tsc --noEmit"},
-"dependencies":{"react":"^19.1.0","react-dom":"^19.1.0"},
-"devDependencies":{"@types/react":"^19.1.0","@types/react-dom":"^19.1.0","@vitejs/plugin-react":"^4.4.0","typescript":"~5.8.3","vite":"^6.3.0","vitest":"^3.1.0"}}
+{
+  "name": "idlenode",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:backend": "python -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000",
+    "dev:worker": "python worker-agent/src/agent.py",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:backend": "python -m pytest backend/tests worker-agent/tests -v",
+    "test:all": "vitest run && python -m pytest backend/tests worker-agent/tests -v",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "lucide-react": "^1.59.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.4.0",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.0",
+    "vitest": "^3.1.0"
+  }
+}
