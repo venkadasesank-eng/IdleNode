@@ -66,6 +66,68 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ============================================================
+   SCOPED TEXT SELECTION CONTROLS
+   Prevent accidental dragging/selection on application chrome,
+   buttons, badges, and headers, while preserving full selectable
+   and copyable behavior for code, terminal, logs, inputs & docs.
+   ============================================================ */
+.glass-btn,
+.brand-badge,
+.nav-link-btn,
+.sidebar-title,
+.header-status-pill,
+.role-switcher-popover,
+.metric-card-top,
+.metric-big-number,
+.metric-subtitle,
+.metric-progress-track,
+.terminal-header,
+.terminal-line-num,
+.ws-status-badge,
+.glass-table th,
+.landing-preview-toolbar,
+.landing-section h1,
+.landing-section h2,
+.landing-section h3,
+.panel-title,
+.unselectable,
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Explicitly preserve selectable & copyable text for code, forms, technical logs & docs */
+input,
+textarea,
+select,
+.glass-input,
+.glass-select,
+pre,
+code,
+kbd,
+samp,
+.terminal-log-content,
+.terminal-row,
+.terminal-timestamp,
+.terminal-tag,
+.terminal-prompt,
+.landing-code-box,
+.landing-code-box *,
+.selectable,
+.copyable,
+.api-docs-container,
+.api-docs-container *,
+.code-block,
+table.glass-table td {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
 /* 1. Background Video and Layering */
 .bg-video-container {
   position: fixed;
@@ -85,7 +147,7 @@ html, body {
   height: 100%;
   object-fit: cover;
   pointer-events: none;
-  opacity: 0.48;
+  opacity: 0.85;
   transform: translateZ(0);
   will-change: transform;
 }
@@ -97,7 +159,7 @@ html, body {
   height: 100%;
   background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
   background-size: 28px 28px;
-  opacity: 0.25;
+  opacity: 0.18;
   pointer-events: none;
 }
 
@@ -106,7 +168,7 @@ html, body {
   inset: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at 50% 25%, rgba(3, 4, 8, 0.65) 0%, rgba(3, 4, 8, 0.92) 100%);
+  background: radial-gradient(circle at 50% 30%, rgba(3, 4, 8, 0.28) 0%, rgba(3, 4, 8, 0.62) 100%);
   pointer-events: none;
 }
 
@@ -831,4 +893,156 @@ html, body {
     height: auto;
     padding: 12px 14px;
   }
+  .glass-search-trigger {
+    width: auto !important;
+    padding: 0 10px !important;
+  }
+  .glass-search-trigger span {
+    display: none;
+  }
 }
+
+/* ============================================================
+   GLOBAL SEARCH & COMMAND PALETTE
+   ============================================================ */
+.glass-search-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: var(--radius-pill);
+  color: #A1A1AA;
+  font-size: 0.82rem;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.glass-search-trigger:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #FAFAFA;
+}
+
+.search-kbd {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: #A1A1AA;
+  line-height: 1.4;
+}
+
+.search-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+  padding-left: 16px;
+  padding-right: 16px;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.search-modal-container {
+  width: 100%;
+  max-width: 620px;
+  background: rgba(14, 17, 24, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.95), 0 0 1px rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: modalScaleUp 0.18s var(--ease);
+}
+
+.search-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.search-modal-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-sans);
+  font-size: 0.98rem;
+  color: #FAFAFA;
+}
+
+.search-modal-input::placeholder {
+  color: #71717A;
+}
+
+.search-modal-results {
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.search-result-item:hover,
+.search-result-item.active {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.search-result-item.active {
+  border-left: 2px solid #38BDF8;
+}
+
+.search-result-badge {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: #A1A1AA;
+}
+
+.search-footer-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.3);
+  font-size: 0.74rem;
+  color: #71717A;
+}
+

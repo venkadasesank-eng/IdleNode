@@ -5,7 +5,6 @@ import {
   Terminal, RefreshCw, Sparkles, HardDrive,
   ExternalLink, ChevronRight
 } from 'lucide-react'
-
 interface LandingPageProps {
   onSignIn?: () => void
   onGetStarted: () => void
@@ -634,17 +633,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span className="brand-dot" />
+          <img src="/images/idlenode-logo.png" alt="IdleNode Logo" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
           <strong style={{ color: '#FAFAFA' }}>IdleNode Campus Platform</strong>
           <span>•</span>
           <span>Democratizing Student Compute with Decentralized Lab Grids</span>
         </div>
 
-        <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
           <span style={{ cursor: 'pointer', color: '#E4E4E7' }} onClick={onExploreDemo}>Demo Roles</span>
           <span style={{ cursor: 'pointer', color: '#E4E4E7' }} onClick={onGetStarted}>Student Register</span>
           {onSignIn && <span style={{ cursor: 'pointer', color: '#E4E4E7' }} onClick={onSignIn}>Sign In</span>}
-          <span>Institutional Policies</span>
           <span>Security Architecture</span>
           <span>© 2026 IdleNode</span>
         </div>

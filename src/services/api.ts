@@ -1,6 +1,7 @@
 // IdleNode API client service
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'
-const WS_BASE = import.meta.env.VITE_WS_BASE_URL || 'ws://127.0.0.1:8000'
+export const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
+export const WS_BASE = import.meta.env.VITE_WS_BASE_URL || ((typeof window !== 'undefined' && window.location.protocol === 'https:') ? 'wss://' : 'ws://') + (typeof window !== 'undefined' ? window.location.host : '127.0.0.1:8000')
+export const SWAGGER_DOCS_URL = import.meta.env.VITE_SWAGGER_DOCS_URL || '/docs'
 
 export interface UserSession {
   token: string
@@ -281,7 +282,7 @@ export const api = {
   // Health check
   checkHealth: async () => {
     try {
-      const resp = await fetch('http://127.0.0.1:8000/api/health')
+      const resp = await fetch(`${API_BASE}/health`)
       return resp.ok
     } catch {
       return false

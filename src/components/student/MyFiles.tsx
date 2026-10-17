@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Folder, Upload, Trash2, HardDrive, FileText } from 'lucide-react'
-import { api } from '../../services/api'
+import { api, API_BASE } from '../../services/api'
 import { ConfirmModal } from '../ui/ConfirmModal'
 
 export const MyFiles: React.FC = () => {
@@ -58,7 +58,7 @@ export const MyFiles: React.FC = () => {
       formData.append('storage_type', tab)
 
       const token = localStorage.getItem('idlenode_token')
-      await fetch('http://127.0.0.1:8000/api/student/files/upload', {
+      await fetch(`${API_BASE}/student/files/upload`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,

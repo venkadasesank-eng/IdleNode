@@ -2,12 +2,14 @@ import { useState, useEffect, useRef } from 'react'
 import {
   LayoutDashboard, Zap, Monitor, History, Folder, Coins,
   LogOut, Shield, ChevronDown, Check, Activity, Building2, User,
-  Bell, AlertCircle, Loader2
+  Bell, AlertCircle, Loader2, BookOpen, Search
 } from 'lucide-react'
 
 import { BackgroundVideo } from './components/layout/BackgroundVideo'
 import { LandingPage } from './components/public/LandingPage'
 import { AuthModal } from './components/public/AuthModal'
+import { ApiDocsView } from './components/public/ApiDocsView'
+import { GlobalSearchModal } from './components/common/GlobalSearchModal'
 
 // Student Views
 import { StudentOverview } from './components/student/StudentOverview'
@@ -36,6 +38,8 @@ export default function App() {
   // Navigation State
   const [currentPage, setCurrentPage] = useState<string>('Overview')
   const [activeComputeSession, setActiveComputeSession] = useState<any | null>(null)
+  const [isViewingApiDocs, setIsViewingApiDocs] = useState<boolean>(false)
+  const [searchModalOpen, setSearchModalOpen] = useState<boolean>(false)
   
   // Role Switcher Popover State
   const [roleSwitcherOpen, setRoleSwitcherOpen] = useState(false)
@@ -86,6 +90,53 @@ export default function App() {
     }
   }, [roleSwitcherOpen])
 
+  // Global Keyboard Shortcut: Ctrl+K or Cmd+K to open search anywhere
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement
+      const isInput =
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        if (!isInput) {
+          e.preventDefault()
+          setSearchModalOpen((v) => !v)
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  // Sync URL hash / pathname for direct API Docs navigation with role restrictions
+  useEffect(() => {
+    const checkRoute = () => {
+      const hash = window.location.hash
+      const path = window.location.pathname
+
+      if (hash === '#api-docs' || path === '/api-docs') {
+        // Enforce restriction: students cannot access API docs
+        if (session && session.role === 'student') {
+          setIsViewingApiDocs(false)
+          window.location.hash = ''
+        } else {
+          setIsViewingApiDocs(true)
+        }
+      }
+    }
+
+    checkRoute()
+    window.addEventListener('hashchange', checkRoute)
+    window.addEventListener('popstate', checkRoute)
+    return () => {
+      window.removeEventListener('hashchange', checkRoute)
+      window.removeEventListener('popstate', checkRoute)
+    }
+  }, [session])
+
   // Poll or fetch dashboard telemetry
   useEffect(() => {
     if (session?.role === 'student') {
@@ -134,6 +185,7 @@ export default function App() {
     setSession(null)
     setCurrentPage('Overview')
     setActiveComputeSession(null)
+    setIsViewingApiDocs(false)
   }
 
   const handleSwitchDemoRole = async (demoEmail: string) => {
@@ -143,6 +195,7 @@ export default function App() {
       const newSession = await api.login(demoEmail, 'password123')
       setSession(newSession)
       setCurrentPage('Overview')
+      setIsViewingApiDocs(false)
       setRoleSwitcherOpen(false)
     } catch (err: any) {
       setRoleSwitchError(err?.message || 'Authentication error while switching demo role.')
@@ -193,6 +246,7 @@ export default function App() {
       { id: 'Credit Policies', label: 'Credit Policies', icon: Coins },
       { id: 'Hardware Inventory', label: 'Node Inventory', icon: Building2 },
       { id: 'Audit Trail', label: 'Audit Trail', icon: Shield },
+      { id: 'API Documentation', label: 'API Documentation', icon: BookOpen },
       { id: 'Notifications', label: 'Notifications', icon: Bell },
       { id: 'Profile & Security', label: 'Profile & Security', icon: User },
     ]
@@ -206,14 +260,22 @@ export default function App() {
       <div className="app-container">
         {/* Header Bar */}
         <header className="glass-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div
               className="brand-badge"
-              onClick={() => setCurrentPage('Overview')}
-              style={{ cursor: 'pointer' }}
+              onClick={() => {
+                setIsViewingApiDocs(false)
+                setCurrentPage('Overview')
+                if (window.location.hash) window.location.hash = ''
+              }}
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
               title="IdleNode Platform Home"
             >
-              <span className="brand-dot" />
+              <img
+                src="/images/idlenode-logo.png"
+                alt="IdleNode Logo"
+                style={{ height: '30px', width: 'auto', objectFit: 'contain' }}
+              />
               <span>IdleNode</span>
             </div>
 
@@ -244,11 +306,32 @@ export default function App() {
                 <span>{session.role.replace('_', ' ')}</span>
               </div>
             )}
+
+            {/* Global Search Trigger (Ctrl+K) */}
+            <button
+              className="glass-search-trigger"
+              onClick={() => setSearchModalOpen(true)}
+              title="Search features, actions, and navigation (Ctrl+K)"
+            >
+              <Search size={14} color="#38BDF8" />
+              <span>Search features & actions...</span>
+              <kbd className="search-kbd">Ctrl K</kbd>
+            </button>
           </div>
 
           <div className="header-controls">
             {!session ? (
               <>
+                {isViewingApiDocs && (
+                  <button
+                    className="glass-btn"
+                    onClick={() => setIsViewingApiDocs(false)}
+                    style={{ gap: '6px' }}
+                  >
+                    <BookOpen size={14} />
+                    <span>Back to Home</span>
+                  </button>
+                )}
                 <button
                   className="glass-btn"
                   onClick={() => { setAuthModalTab('demo'); setAuthModalOpen(true) }}
@@ -264,6 +347,20 @@ export default function App() {
               </>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {(session.role === 'institution_admin' || session.role === 'technical_admin') && (
+                  <button
+                    className="glass-btn"
+                    onClick={() => {
+                      setIsViewingApiDocs(false)
+                      setCurrentPage('API Documentation')
+                    }}
+                    title="View Interactive REST & Real-time API Documentation"
+                    style={{ minHeight: '34px', fontSize: '0.8rem', padding: '0 12px', gap: '6px' }}
+                  >
+                    <BookOpen size={13} />
+                    <span>API Docs</span>
+                  </button>
+                )}
                 {/* 1-Click Role Switcher with dedicated relative container */}
                 <div ref={roleSwitcherRef} style={{ position: 'relative' }}>
                   <button
@@ -380,8 +477,12 @@ export default function App() {
           </div>
         </header>
 
-        {/* Unauthenticated View: Public Landing Page */}
-        {!session ? (
+        {/* Unauthenticated View: Public Landing Page or Standalone API Docs */}
+        {isViewingApiDocs ? (
+          <div style={{ padding: '24px 20px', width: '100%', boxSizing: 'border-box' }}>
+            <ApiDocsView onBack={() => setIsViewingApiDocs(false)} />
+          </div>
+        ) : !session ? (
           <LandingPage
             onSignIn={() => { setAuthModalTab('signin'); setAuthModalOpen(true) }}
             onGetStarted={() => { setAuthModalTab('register'); setAuthModalOpen(true) }}
@@ -413,6 +514,10 @@ export default function App() {
             {/* Main Panel */}
             <main className="glass-main-panel">
               {/* Universal Views across all roles */}
+              {currentPage === 'API Documentation' && (
+                <ApiDocsView onBack={() => setCurrentPage('Overview')} />
+              )}
+
               {currentPage === 'Notifications' && (
                 <NotificationsView userRole={session.role} />
               )}
@@ -474,18 +579,18 @@ export default function App() {
               )}
 
               {/* LAB ASSISTANT VIEWS (No compute access) */}
-              {session.role === 'lab_assistant' && currentPage !== 'Notifications' && currentPage !== 'Profile & Security' && (
+              {session.role === 'lab_assistant' && currentPage !== 'Notifications' && currentPage !== 'Profile & Security' && currentPage !== 'API Documentation' && (
                 <LabAssistantDashboard activeNav={currentPage} />
               )}
 
               {/* HOD VIEWS (No compute access) */}
-              {session.role === 'hod' && currentPage !== 'Notifications' && currentPage !== 'Profile & Security' && (
+              {session.role === 'hod' && currentPage !== 'Notifications' && currentPage !== 'Profile & Security' && currentPage !== 'API Documentation' && (
                 <HodDashboard activeNav={currentPage} />
               )}
 
               {/* INSTITUTION ADMINISTRATOR / TECH ADMIN VIEWS (No compute access) */}
               {(session.role === 'institution_admin' || session.role === 'technical_admin') &&
-                currentPage !== 'Notifications' && currentPage !== 'Profile & Security' && (
+                currentPage !== 'Notifications' && currentPage !== 'Profile & Security' && currentPage !== 'API Documentation' && (
                   <InstitutionAdminDashboard activeNav={currentPage} />
               )}
             </main>
@@ -499,6 +604,31 @@ export default function App() {
         initialTab={authModalTab}
         onClose={() => setAuthModalOpen(false)}
         onSuccess={(sess) => setSession(sess)}
+      />
+
+      {/* Global Search & Command Palette Modal */}
+      <GlobalSearchModal
+        isOpen={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
+        session={session}
+        onNavigate={(page) => {
+          setIsViewingApiDocs(false)
+          setCurrentPage(page)
+        }}
+        onAction={(actionKey) => {
+          if (actionKey === 'open-signin') {
+            setAuthModalTab('signin')
+            setAuthModalOpen(true)
+          } else if (actionKey === 'open-register') {
+            setAuthModalTab('register')
+            setAuthModalOpen(true)
+          } else if (actionKey === 'open-demo') {
+            setAuthModalTab('demo')
+            setAuthModalOpen(true)
+          } else if (actionKey === 'open-api-docs') {
+            setIsViewingApiDocs(true)
+          }
+        }}
       />
     </div>
   )
