@@ -8,11 +8,10 @@ export const BackgroundVideo: React.FC = () => {
     const video = videoRef.current
     if (!video) return
 
-    // Ensure playsInline and autoplay work across browsers
+    video.playbackRate = 1.0 // Smooth natural playback, no slow-motion
     const playPromise = video.play()
     if (playPromise !== undefined) {
-      playPromise.catch((_err) => {
-        // Autoplay may be restricted before user interaction; mute is set
+      playPromise.catch(() => {
         video.muted = true
         video.play().catch(() => setVideoError(true))
       })
@@ -21,11 +20,8 @@ export const BackgroundVideo: React.FC = () => {
 
   return (
     <div className="bg-video-container" aria-hidden="true">
-      {/* 1. Subtle space-like fine dots grid */}
-      <div className="bg-space-grid" />
-
-      {/* 2. Mandatory exact supplied background animation video */}
-      {!videoError && (
+      {/* 1. Background video with smooth natural looping */}
+      {!videoError ? (
         <video
           ref={videoRef}
           className="bg-video"
@@ -36,9 +32,12 @@ export const BackgroundVideo: React.FC = () => {
           playsInline
           onError={() => setVideoError(true)}
         />
+      ) : (
+        /* Fallback space grid only if video cannot play */
+        <div className="bg-space-grid" />
       )}
 
-      {/* 3. Subtle dark contrast overlay to ensure crisp readability */}
+      {/* 2. Dark contrast overlay ensuring text is crisp, legible and framed */}
       <div className="bg-contrast-overlay" />
     </div>
   )
